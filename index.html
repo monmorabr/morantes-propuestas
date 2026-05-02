@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>morantes. — Generador de propuestas</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#F4F4F2;min-height:100vh;padding:1.5rem 1rem}
+.app{max-width:720px;margin:0 auto}
+.header{background:#1D3461;border-radius:12px;padding:1rem 1.5rem;display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem}
+.header-brand{color:#fff;font-size:16px;font-weight:500}
+.header-sub{color:#8AB4D4;font-size:12px;margin-top:2px}
+.step-indicator{display:flex;gap:6px}
+.step-dot{width:8px;height:8px;border-radius:50%;background:#4A6A8A;transition:background 0.2s}
+.step-dot.active{background:#fff}
+.step-dot.done{background:#1D71B8}
+.section-card{background:#fff;border:0.5px solid #DADADA;border-radius:12px;padding:1.25rem;margin-bottom:1rem}
+.section-label{font-size:11px;font-weight:500;color:#878787;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:12px}
+.field-group{display:flex;flex-direction:column;gap:4px;margin-bottom:10px}
+.field-label{font-size:12px;color:#878787}
+.field-input{font-size:14px;border:0.5px solid #DADADA;border-radius:8px;padding:8px 10px;background:#F6F6F4;color:#1D1D1B;width:100%}
+.field-input:focus{outline:none;border-color:#185FA5;background:#fff}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+.proyecto-card{background:#F6F6F4;border:0.5px solid #DADADA;border-radius:12px;padding:1rem;margin-bottom:10px}
+.proyecto-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.proyecto-num{font-size:12px;font-weight:500;color:#1D71B8;background:#E6F1FB;padding:3px 10px;border-radius:20px}
+.btn-remove{font-size:12px;color:#878787;background:none;border:none;cursor:pointer;padding:2px 8px;border-radius:6px}
+.btn-remove:hover{color:#E24B4A;background:#FCEBEB}
+.btn-add{width:100%;padding:10px;border:0.5px dashed #DADADA;border-radius:8px;background:none;color:#878787;font-size:13px;cursor:pointer;margin-top:4px;transition:all 0.15s}
+.btn-add:hover{background:#fff;color:#1D1D1B}
+.img-upload-area{border:0.5px dashed #DADADA;border-radius:8px;padding:14px;text-align:center;cursor:pointer;position:relative;background:#fff}
+.img-upload-area:hover{background:#F6F6F4}
+.img-upload-area input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.img-preview{width:100%;height:90px;object-fit:cover;border-radius:8px;margin-top:6px;display:block}
+.img-toggle{font-size:11px;color:#1D71B8;cursor:pointer;margin-top:6px;display:inline-block}
+.amenidad-wrap{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.amenidad-tag{font-size:11px;padding:4px 10px;border-radius:20px;background:#fff;border:0.5px solid #DADADA;cursor:pointer;color:#878787;user-select:none}
+.amenidad-tag.sel{background:#E6F1FB;color:#0C447C;border-color:#185FA5}
+.btn-primary{background:#1D3461;color:#fff;border:none;border-radius:8px;padding:12px 24px;font-size:14px;cursor:pointer;font-weight:500;width:100%;margin-top:8px;transition:background 0.15s}
+.btn-primary:hover{background:#142447}
+.btn-primary:disabled{background:#B4B2A9;cursor:not-allowed}
+.btn-secondary{background:#fff;color:#1D1D1B;border:0.5px solid #DADADA;border-radius:8px;padding:10px 18px;font-size:13px;cursor:pointer;transition:background 0.15s}
+.btn-secondary:hover{background:#F6F6F4}
+.nav-row{display:flex;gap:10px;margin-top:12px}
+.login-wrap{max-width:380px;margin:2rem auto}
+.login-logo-bar{background:#1D3461;border-radius:12px;padding:1.25rem;text-align:center;margin-bottom:1rem}
+.login-card{background:#fff;border:0.5px solid #DADADA;border-radius:12px;padding:2rem}
+.login-title{font-size:18px;font-weight:500;color:#1D1D1B;text-align:center;margin-bottom:4px}
+.login-sub{font-size:13px;color:#878787;text-align:center;margin-bottom:1.5rem}
+.error-msg{font-size:12px;color:#E24B4A;margin-top:8px;display:none}
+.success-banner{background:#E1F5EE;border:0.5px solid #5DCAA5;border-radius:8px;padding:12px 16px;font-size:13px;color:#085041;margin-bottom:12px}
+.resumen-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:0.5px solid #DADADA}
+.resumen-num{font-size:11px;color:#1D71B8;font-weight:500;min-width:72px}
+.tag-pill{font-size:11px;padding:3px 8px;border-radius:20px;background:#E6F1FB;color:#0C447C}
+@media(max-width:500px){.row2,.row3{grid-template-columns:1fr}.nav-row{flex-direction:column-reverse}}
+</style>
+</head>
+<body>
+<div class="app" id="root"></div>
+<script>
+const USERS={"morantes":"Morantes2025","asesor1":"Asesor2025","asesor2":"Asesor2025"};
+const AMENIDADES=["Alberca","Bar climatizado","Coworking","Gimnasio","Grill","Estacionamiento","Elevador","Seguridad 24h","Jardín","Social Room","Pet Park","Piscina","Fitness Room","TV Room","Roof Garden"];
+let state={loggedIn:false,user:"",step:1,cliente:{nombre:"",presupuesto:"",interes:"vivienda"},asesor:{nombre:"",telefono:"",correo:""},proyectos:[newP(1)]};
+
+function newP(n){return{id:Date.now()+n,nombre:"",zona:"",precio:"",entrega:"",recamaras:"",sup:"",amenidades:[],enganche:"",brochure:"",maps:"",imgData:null,imgUrl:"",imgMode:"upload"};}
+
+function render(){
+  const root=document.getElementById('root');
+  if(!state.loggedIn){root.innerHTML=loginHTML();bindLogin();return;}
+  if(state.step===1){root.innerHTML=step1HTML();bindStep1();}
+  else if(state.step===2){root.innerHTML=step2HTML();bindStep2();}
+  else if(state.step===3){root.innerHTML=step3HTML();bindStep3();}
+}
+
+function loginHTML(){return `
+<div class="login-wrap">
+  <div class="login-logo-bar">
+    <div style="color:#fff;font-size:20px;font-weight:500">morantes.</div>
+    <div style="color:#8AB4D4;font-size:11px;margin-top:2px">REAL ESTATE</div>
+  </div>
+  <div class="login-card">
+    <div class="login-title">Generador de propuestas</div>
+    <div class="login-sub">Acceso exclusivo — equipo morantes.</div>
+    <div class="field-group"><label class="field-label">Usuario</label><input class="field-input" id="u" placeholder="tu usuario"/></div>
+    <div class="field-group"><label class="field-label">Contraseña</label><input class="field-input" id="p" type="password" placeholder="••••••••"/></div>
+    <div class="error-msg" id="err">Usuario o contraseña incorrectos</div>
+    <button class="btn-primary" id="login-btn" style="margin-top:14px">Entrar</button>
+  </div>
+</div>`;}
+
+function bindLogin(){
+  document.getElementById('login-btn').onclick=doLogin;
+  document.getElementById('p').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
+}
+
+function doLogin(){
+  const u=document.getElementById('u').value.trim().toLowerCase();
+  const p=document.getElementById('p').value;
+  if(USERS[u]&&USERS[u]===p){state.loggedIn=true;state.user=u;render();}
+  else{document.getElementById('err').style.display='block';}
+}
+
+function stepHeader(active){
+  const labels=["Cliente y asesor","Proyectos","Revisar y generar"];
+  const dots=[1,2,3].map(i=>`<div class="step-dot ${i===active?'active':i<active?'done':''}"></div>`).join('');
+  return `<div class="header"><div><div class="header-brand">morantes. — Propuestas</div><div class="header-sub">Paso ${active} de 3: ${labels[active-1]}</div></div><div class="step-indicator">${dots}</div></div>`;}
+
+function step1HTML(){
+  const c=state.cliente;const a=state.asesor;
+  return `${stepHeader(1)}
+  <div class="section-card">
+    <div class="section-label">Datos del cliente</div>
+    <div class="field-group"><label class="field-label">Nombre del cliente *</label><input class="field-input" id="c-nombre" value="${c.nombre}" placeholder="Ej. Pepe Madero"/></div>
+    <div class="row2">
+      <div class="field-group"><label class="field-label">Presupuesto máximo</label><input class="field-input" id="c-presupuesto" value="${c.presupuesto}" placeholder="Ej. $3,000,000 MXN"/></div>
+      <div class="field-group"><label class="field-label">Interés principal</label>
+        <select class="field-input" id="c-interes">
+          <option value="vivienda" ${c.interes==='vivienda'?'selected':''}>Vivienda propia</option>
+          <option value="inversion" ${c.interes==='inversion'?'selected':''}>Inversión</option>
+          <option value="preventa" ${c.interes==='preventa'?'selected':''}>Preventa</option>
+          <option value="renta" ${c.interes==='renta'?'selected':''}>Renta vacacional</option>
+        </select>
+      </div>
+    </div>
+  </div>
+  <div class="section-card">
+    <div class="section-label">Datos del asesor</div>
+    <div class="field-group"><label class="field-label">Nombre del asesor *</label><input class="field-input" id="a-nombre" value="${a.nombre}" placeholder="Juan Carlos Morales Góngora"/></div>
+    <div class="row2">
+      <div class="field-group"><label class="field-label">Teléfono</label><input class="field-input" id="a-tel" value="${a.telefono}" placeholder="999 123 4567"/></div>
+      <div class="field-group"><label class="field-label">Correo</label><input class="field-input" id="a-correo" value="${a.correo}" placeholder="correo@morantes.mx"/></div>
+    </div>
+  </div>
+  <button class="btn-primary" id="next1">Siguiente: Agregar proyectos →</button>`;}
+
+function bindStep1(){
+  document.getElementById('next1').onclick=()=>{
+    const nom=document.getElementById('c-nombre').value.trim();
+    if(!nom){alert('El nombre del cliente es requerido');return;}
+    state.cliente={nombre:nom,presupuesto:document.getElementById('c-presupuesto').value,interes:document.getElementById('c-interes').value};
+    state.asesor={nombre:document.getElementById('a-nombre').value,telefono:document.getElementById('a-tel').value,correo:document.getElementById('a-correo').value};
+    state.step=2;render();
+  };}
+
+function proyHTML(pr,i){
+  const ams=AMENIDADES.map(a=>`<span class="amenidad-tag ${pr.amenidades.includes(a)?'sel':''}" data-prid="${pr.id}" data-am="${a}">${a}</span>`).join('');
+  const imgSection=pr.imgMode==='upload'
+    ?`<div class="img-upload-area"><input type="file" accept="image/*" data-prid="${pr.id}" class="img-file-input"/>${pr.imgData?`<img src="${pr.imgData}" class="img-preview"/>`:'<div style="font-size:12px;color:#878787;padding:8px 0">📎 Subir foto de fachada</div>'}</div><span class="img-toggle" data-prid="${pr.id}" data-mode="url">O usar link de imagen</span>`
+    :`<input class="field-input img-url-input" data-prid="${pr.id}" placeholder="https://..." value="${pr.imgUrl}"/><span class="img-toggle" data-prid="${pr.id}" data-mode="upload">O subir desde dispositivo</span>`;
+  return `<div class="proyecto-card" id="proy-${pr.id}">
+    <div class="proyecto-header"><span class="proyecto-num">Proyecto ${i+1}</span>${state.proyectos.length>1?`<button class="btn-remove" data-prid="${pr.id}">✕ Quitar</button>`:''}</div>
+    <div class="row2">
+      <div class="field-group"><label class="field-label">Nombre del desarrollo *</label><input class="field-input pf" data-prid="${pr.id}" data-f="nombre" value="${pr.nombre}" placeholder="Ej. Büa"/></div>
+      <div class="field-group"><label class="field-label">Zona</label><input class="field-input pf" data-prid="${pr.id}" data-f="zona" value="${pr.zona}" placeholder="Temozón Norte"/></div>
+    </div>
+    <div class="row3">
+      <div class="field-group"><label class="field-label">Precio desde</label><input class="field-input pf" data-prid="${pr.id}" data-f="precio" value="${pr.precio}" placeholder="$2,440,000"/></div>
+      <div class="field-group"><label class="field-label">Entrega</label><input class="field-input pf" data-prid="${pr.id}" data-f="entrega" value="${pr.entrega}" placeholder="Ago 2026"/></div>
+      <div class="field-group"><label class="field-label">Recámaras</label><input class="field-input pf" data-prid="${pr.id}" data-f="recamaras" value="${pr.recamaras}" placeholder="2 rec."/></div>
+    </div>
+    <div class="row2">
+      <div class="field-group"><label class="field-label">Superficie</label><input class="field-input pf" data-prid="${pr.id}" data-f="sup" value="${pr.sup}" placeholder="65 m²"/></div>
+      <div class="field-group"><label class="field-label">Enganche</label><input class="field-input pf" data-prid="${pr.id}" data-f="enganche" value="${pr.enganche}" placeholder="10% enganche"/></div>
+    </div>
+    <div class="row2">
+      <div class="field-group"><label class="field-label">Link Brochure</label><input class="field-input pf" data-prid="${pr.id}" data-f="brochure" value="${pr.brochure}" placeholder="https://drive.google.com/..."/></div>
+      <div class="field-group"><label class="field-label">Link Ubicación</label><input class="field-input pf" data-prid="${pr.id}" data-f="maps" value="${pr.maps}" placeholder="https://maps.app.goo.gl/..."/></div>
+    </div>
+    <div class="field-group"><label class="field-label">Amenidades</label><div class="amenidad-wrap">${ams}</div></div>
+    <div class="field-group"><label class="field-label">Imagen de fachada</label>${imgSection}</div>
+  </div>`;}
+
+function step2HTML(){
+  return `${stepHeader(2)}
+  <div id="pw">${state.proyectos.map((p,i)=>proyHTML(p,i)).join('')}</div>
+  <button class="btn-add" id="add-p">+ Agregar otro proyecto</button>
+  <div class="nav-row">
+    <button class="btn-secondary" id="back2">← Atrás</button>
+    <button class="btn-primary" id="next2" style="flex:1">Siguiente: Revisar →</button>
+  </div>`;}
+
+function bindStep2(){
+  document.getElementById('add-p').onclick=()=>{state.proyectos.push(newP(state.proyectos.length+1));render();};
+  document.getElementById('back2').onclick=()=>{state.step=1;render();};
+  document.getElementById('next2').onclick=()=>{
+    if(!state.proyectos.some(p=>p.nombre.trim())){alert('Agrega al menos un proyecto');return;}
+    state.step=3;render();};
+  document.querySelectorAll('.pf').forEach(el=>{el.oninput=()=>{const p=state.proyectos.find(x=>x.id==el.dataset.prid);if(p)p[el.dataset.f]=el.value;};});
+  document.querySelectorAll('.amenidad-tag').forEach(el=>{el.onclick=()=>{const p=state.proyectos.find(x=>x.id==el.dataset.prid);if(!p)return;const a=el.dataset.am;if(p.amenidades.includes(a))p.amenidades=p.amenidades.filter(x=>x!==a);else p.amenidades.push(a);el.classList.toggle('sel');};});
+  document.querySelectorAll('.btn-remove').forEach(el=>{el.onclick=()=>{state.proyectos=state.proyectos.filter(p=>p.id!=el.dataset.prid);render();};});
+  document.querySelectorAll('.img-toggle').forEach(el=>{el.onclick=()=>{const p=state.proyectos.find(x=>x.id==el.dataset.prid);if(p){p.imgMode=el.dataset.mode;render();}};});
+  document.querySelectorAll('.img-file-input').forEach(el=>{el.onchange=e=>{const p=state.proyectos.find(x=>x.id==el.dataset.prid);if(!p||!e.target.files[0])return;const r=new FileReader();r.onload=ev=>{p.imgData=ev.target.result;render();};r.readAsDataURL(e.target.files[0]);};});
+  document.querySelectorAll('.img-url-input').forEach(el=>{el.oninput=()=>{const p=state.proyectos.find(x=>x.id==el.dataset.prid);if(p)p.imgUrl=el.value;};});}
+
+function step3HTML(){
+  const c=state.cliente;const a=state.asesor;
+  const filas=state.proyectos.map((p,i)=>`<div class="resumen-row"><span class="resumen-num">Proyecto ${i+1}</span><span style="font-size:13px;font-weight:500;color:#1D1D1B;flex:1">${p.nombre||'Sin nombre'}</span><span style="font-size:12px;color:#878787">${p.precio}</span></div>`).join('');
+  return `${stepHeader(3)}
+  <div class="section-card">
+    <div class="section-label">Resumen</div>
+    <div class="row2" style="margin-bottom:14px">
+      <div style="background:#F6F6F4;border-radius:8px;padding:10px">
+        <div style="font-size:11px;color:#878787;margin-bottom:3px">Cliente</div>
+        <div style="font-size:14px;font-weight:500;color:#1D1D1B">${c.nombre}</div>
+        <div style="font-size:12px;color:#878787">${c.presupuesto}</div>
+      </div>
+      <div style="background:#F6F6F4;border-radius:8px;padding:10px">
+        <div style="font-size:11px;color:#878787;margin-bottom:3px">Asesor</div>
+        <div style="font-size:14px;font-weight:500;color:#1D1D1B">${a.nombre||'—'}</div>
+        <div style="font-size:12px;color:#878787">${a.correo||a.telefono}</div>
+      </div>
+    </div>
+    <div style="font-size:11px;color:#878787;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:6px">Proyectos (${state.proyectos.length})</div>
+    ${filas}
+  </div>
+  <div class="success-banner" id="ok" style="display:none">✓ Enviando a Claude para generar el PDF...</div>
+  <div class="nav-row">
+    <button class="btn-secondary" id="back3">← Atrás</button>
+    <button class="btn-primary" id="gen" style="flex:1">Generar PDF ↗</button>
+  </div>`;}
+
+function bindStep3(){
+  document.getElementById('back3').onclick=()=>{state.step=2;render();};
+  document.getElementById('gen').onclick=()=>{
+    document.getElementById('ok').style.display='block';
+    const btn=document.getElementById('gen');btn.disabled=true;btn.textContent='Generando...';
+    const txt=state.proyectos.map((p,i)=>`Proyecto ${i+1}: ${p.nombre}\n- Zona: ${p.zona}\n- Precio: ${p.precio}\n- Entrega: ${p.entrega}\n- Recámaras: ${p.recamaras} | Sup: ${p.sup}\n- Amenidades: ${p.amenidades.join(', ')||'N/A'}\n- Enganche: ${p.enganche}\n- Brochure: ${p.brochure||'—'}\n- Maps: ${p.maps||'—'}`).join('\n\n');
+    const msg=`Genera el PDF de propuesta con branding morantes. Real Estate para:\n\nCLIENTE: ${state.cliente.nombre}\nPresupuesto: ${state.cliente.presupuesto} | Interés: ${state.cliente.interes}\n\nASESOR: ${state.asesor.nombre}\nTel: ${state.asesor.telefono} | Correo: ${state.asesor.correo}\n\nPROYECTOS:\n${txt}`;
+    setTimeout(()=>{if(typeof sendPrompt==='function')sendPrompt(msg);else alert('Copia este mensaje y pégalo en Claude:\n\n'+msg);},600);
+  };}
+
+render();
+</script>
+</body>
+</html>
