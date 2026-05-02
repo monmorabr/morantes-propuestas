@@ -4,6 +4,7 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>morantes. — Generador de propuestas</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#F4F4F2;min-height:100vh;padding:1.5rem 1rem}
@@ -28,32 +29,26 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .proyecto-num{font-size:12px;font-weight:500;color:#1D71B8;background:#E6F1FB;padding:3px 10px;border-radius:20px}
 .btn-remove{font-size:12px;color:#878787;background:none;border:none;cursor:pointer;padding:2px 8px;border-radius:6px}
 .btn-remove:hover{color:#E24B4A;background:#FCEBEB}
-.btn-add{width:100%;padding:10px;border:0.5px dashed #DADADA;border-radius:8px;background:none;color:#878787;font-size:13px;cursor:pointer;margin-top:4px;transition:all 0.15s}
+.btn-add{width:100%;padding:10px;border:0.5px dashed #DADADA;border-radius:8px;background:none;color:#878787;font-size:13px;cursor:pointer;margin-top:4px}
 .btn-add:hover{background:#fff;color:#1D1D1B}
 .img-upload-area{border:0.5px dashed #DADADA;border-radius:8px;padding:14px;text-align:center;cursor:pointer;position:relative;background:#fff}
-.img-upload-area:hover{background:#F6F6F4}
 .img-upload-area input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
 .img-preview{width:100%;height:90px;object-fit:cover;border-radius:8px;margin-top:6px;display:block}
 .img-toggle{font-size:11px;color:#1D71B8;cursor:pointer;margin-top:6px;display:inline-block}
 .amenidad-wrap{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
 .amenidad-tag{font-size:11px;padding:4px 10px;border-radius:20px;background:#fff;border:0.5px solid #DADADA;cursor:pointer;color:#878787;user-select:none}
 .amenidad-tag.sel{background:#E6F1FB;color:#0C447C;border-color:#185FA5}
-.btn-primary{background:#1D3461;color:#fff;border:none;border-radius:8px;padding:12px 24px;font-size:14px;cursor:pointer;font-weight:500;width:100%;margin-top:8px;transition:background 0.15s}
+.btn-primary{background:#1D3461;color:#fff;border:none;border-radius:8px;padding:12px 24px;font-size:14px;cursor:pointer;font-weight:500;width:100%;margin-top:8px}
 .btn-primary:hover{background:#142447}
 .btn-primary:disabled{background:#B4B2A9;cursor:not-allowed}
-.btn-secondary{background:#fff;color:#1D1D1B;border:0.5px solid #DADADA;border-radius:8px;padding:10px 18px;font-size:13px;cursor:pointer;transition:background 0.15s}
+.btn-secondary{background:#fff;color:#1D1D1B;border:0.5px solid #DADADA;border-radius:8px;padding:10px 18px;font-size:13px;cursor:pointer}
 .btn-secondary:hover{background:#F6F6F4}
 .nav-row{display:flex;gap:10px;margin-top:12px}
 .login-wrap{max-width:380px;margin:2rem auto}
-.login-logo-bar{background:#1D3461;border-radius:12px;padding:1.25rem;text-align:center;margin-bottom:1rem}
 .login-card{background:#fff;border:0.5px solid #DADADA;border-radius:12px;padding:2rem}
-.login-title{font-size:18px;font-weight:500;color:#1D1D1B;text-align:center;margin-bottom:4px}
-.login-sub{font-size:13px;color:#878787;text-align:center;margin-bottom:1.5rem}
 .error-msg{font-size:12px;color:#E24B4A;margin-top:8px;display:none}
-.success-banner{background:#E1F5EE;border:0.5px solid #5DCAA5;border-radius:8px;padding:12px 16px;font-size:13px;color:#085041;margin-bottom:12px}
-.resumen-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:0.5px solid #DADADA}
-.resumen-num{font-size:11px;color:#1D71B8;font-weight:500;min-width:72px}
-.tag-pill{font-size:11px;padding:3px 8px;border-radius:20px;background:#E6F1FB;color:#0C447C}
+.download-btn{background:#1D9E75;color:#fff;border:none;border-radius:8px;padding:14px 24px;font-size:15px;cursor:pointer;font-weight:500;width:100%;margin-top:12px}
+.download-btn:hover{background:#0F6E56}
 @media(max-width:500px){.row2,.row3{grid-template-columns:1fr}.nav-row{flex-direction:column-reverse}}
 </style>
 </head>
@@ -62,6 +57,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 <script>
 const USERS={"morantes":"Morantes2025","asesor1":"Asesor2025","asesor2":"Asesor2025"};
 const AMENIDADES=["Alberca","Bar climatizado","Coworking","Gimnasio","Grill","Estacionamiento","Elevador","Seguridad 24h","Jardín","Social Room","Pet Park","Piscina","Fitness Room","TV Room","Roof Garden"];
+const NAVY=[29,52,97], BLUE=[29,113,184], LIGHT_BLUE=[230,241,251], GRAY=[135,135,128], DARK=[29,29,27], LINE=[218,218,218], BG=[244,244,242], WHITE=[255,255,255], GREEN=[29,158,117];
+
 let state={loggedIn:false,user:"",step:1,cliente:{nombre:"",presupuesto:"",interes:"vivienda"},asesor:{nombre:"",telefono:"",correo:""},proyectos:[newP(1)]};
 
 function newP(n){return{id:Date.now()+n,nombre:"",zona:"",precio:"",entrega:"",recamaras:"",sup:"",amenidades:[],enganche:"",brochure:"",maps:"",imgData:null,imgUrl:"",imgMode:"upload"};}
@@ -76,13 +73,13 @@ function render(){
 
 function loginHTML(){return `
 <div class="login-wrap">
-  <div class="login-logo-bar">
-    <div style="color:#fff;font-size:20px;font-weight:500">morantes.</div>
-    <div style="color:#8AB4D4;font-size:11px;margin-top:2px">REAL ESTATE</div>
+  <div style="background:#1D3461;border-radius:12px;padding:1.25rem;text-align:center;margin-bottom:1rem">
+    <div style="color:#fff;font-size:22px;font-weight:500">morantes.</div>
+    <div style="color:#8AB4D4;font-size:11px;margin-top:2px">Generador de propuestas</div>
   </div>
   <div class="login-card">
-    <div class="login-title">Generador de propuestas</div>
-    <div class="login-sub">Acceso exclusivo — equipo morantes.</div>
+    <div style="font-size:16px;font-weight:500;color:#1D1D1B;text-align:center;margin-bottom:4px">Acceso al equipo</div>
+    <div style="font-size:13px;color:#878787;text-align:center;margin-bottom:1.5rem">Solo para asesores morantes.</div>
     <div class="field-group"><label class="field-label">Usuario</label><input class="field-input" id="u" placeholder="tu usuario"/></div>
     <div class="field-group"><label class="field-label">Contraseña</label><input class="field-input" id="p" type="password" placeholder="••••••••"/></div>
     <div class="error-msg" id="err">Usuario o contraseña incorrectos</div>
@@ -94,7 +91,6 @@ function bindLogin(){
   document.getElementById('login-btn').onclick=doLogin;
   document.getElementById('p').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
 }
-
 function doLogin(){
   const u=document.getElementById('u').value.trim().toLowerCase();
   const p=document.getElementById('p').value;
@@ -103,19 +99,19 @@ function doLogin(){
 }
 
 function stepHeader(active){
-  const labels=["Cliente y asesor","Proyectos","Revisar y generar"];
+  const labels=["Cliente y asesor","Proyectos","Generar PDF"];
   const dots=[1,2,3].map(i=>`<div class="step-dot ${i===active?'active':i<active?'done':''}"></div>`).join('');
   return `<div class="header"><div><div class="header-brand">morantes. — Propuestas</div><div class="header-sub">Paso ${active} de 3: ${labels[active-1]}</div></div><div class="step-indicator">${dots}</div></div>`;}
 
 function step1HTML(){
-  const c=state.cliente;const a=state.asesor;
+  const c=state.cliente,a=state.asesor;
   return `${stepHeader(1)}
   <div class="section-card">
     <div class="section-label">Datos del cliente</div>
     <div class="field-group"><label class="field-label">Nombre del cliente *</label><input class="field-input" id="c-nombre" value="${c.nombre}" placeholder="Ej. Pepe Madero"/></div>
     <div class="row2">
-      <div class="field-group"><label class="field-label">Presupuesto máximo</label><input class="field-input" id="c-presupuesto" value="${c.presupuesto}" placeholder="Ej. $3,000,000 MXN"/></div>
-      <div class="field-group"><label class="field-label">Interés principal</label>
+      <div class="field-group"><label class="field-label">Presupuesto máximo</label><input class="field-input" id="c-presupuesto" value="${c.presupuesto}" placeholder="$3,000,000 MXN"/></div>
+      <div class="field-group"><label class="field-label">Interés</label>
         <select class="field-input" id="c-interes">
           <option value="vivienda" ${c.interes==='vivienda'?'selected':''}>Vivienda propia</option>
           <option value="inversion" ${c.interes==='inversion'?'selected':''}>Inversión</option>
@@ -127,19 +123,18 @@ function step1HTML(){
   </div>
   <div class="section-card">
     <div class="section-label">Datos del asesor</div>
-    <div class="field-group"><label class="field-label">Nombre del asesor *</label><input class="field-input" id="a-nombre" value="${a.nombre}" placeholder="Juan Carlos Morales Góngora"/></div>
+    <div class="field-group"><label class="field-label">Nombre *</label><input class="field-input" id="a-nombre" value="${a.nombre}" placeholder="Juan Carlos Morales Góngora"/></div>
     <div class="row2">
       <div class="field-group"><label class="field-label">Teléfono</label><input class="field-input" id="a-tel" value="${a.telefono}" placeholder="999 123 4567"/></div>
       <div class="field-group"><label class="field-label">Correo</label><input class="field-input" id="a-correo" value="${a.correo}" placeholder="correo@morantes.mx"/></div>
     </div>
   </div>
-  <button class="btn-primary" id="next1">Siguiente: Agregar proyectos →</button>`;}
+  <button class="btn-primary" id="next1">Siguiente →</button>`;}
 
 function bindStep1(){
   document.getElementById('next1').onclick=()=>{
-    const nom=document.getElementById('c-nombre').value.trim();
-    if(!nom){alert('El nombre del cliente es requerido');return;}
-    state.cliente={nombre:nom,presupuesto:document.getElementById('c-presupuesto').value,interes:document.getElementById('c-interes').value};
+    if(!document.getElementById('c-nombre').value.trim()){alert('El nombre del cliente es requerido');return;}
+    state.cliente={nombre:document.getElementById('c-nombre').value.trim(),presupuesto:document.getElementById('c-presupuesto').value,interes:document.getElementById('c-interes').value};
     state.asesor={nombre:document.getElementById('a-nombre').value,telefono:document.getElementById('a-tel').value,correo:document.getElementById('a-correo').value};
     state.step=2;render();
   };}
@@ -147,12 +142,12 @@ function bindStep1(){
 function proyHTML(pr,i){
   const ams=AMENIDADES.map(a=>`<span class="amenidad-tag ${pr.amenidades.includes(a)?'sel':''}" data-prid="${pr.id}" data-am="${a}">${a}</span>`).join('');
   const imgSection=pr.imgMode==='upload'
-    ?`<div class="img-upload-area"><input type="file" accept="image/*" data-prid="${pr.id}" class="img-file-input"/>${pr.imgData?`<img src="${pr.imgData}" class="img-preview"/>`:'<div style="font-size:12px;color:#878787;padding:8px 0">📎 Subir foto de fachada</div>'}</div><span class="img-toggle" data-prid="${pr.id}" data-mode="url">O usar link de imagen</span>`
+    ?`<div class="img-upload-area"><input type="file" accept="image/*" data-prid="${pr.id}" class="img-file-input"/>${pr.imgData?`<img src="${pr.imgData}" class="img-preview"/>`:'<div style="font-size:12px;color:#878787;padding:6px 0">Subir foto de fachada</div>'}</div><span class="img-toggle" data-prid="${pr.id}" data-mode="url">O usar link de imagen</span>`
     :`<input class="field-input img-url-input" data-prid="${pr.id}" placeholder="https://..." value="${pr.imgUrl}"/><span class="img-toggle" data-prid="${pr.id}" data-mode="upload">O subir desde dispositivo</span>`;
-  return `<div class="proyecto-card" id="proy-${pr.id}">
+  return `<div class="proyecto-card">
     <div class="proyecto-header"><span class="proyecto-num">Proyecto ${i+1}</span>${state.proyectos.length>1?`<button class="btn-remove" data-prid="${pr.id}">✕ Quitar</button>`:''}</div>
     <div class="row2">
-      <div class="field-group"><label class="field-label">Nombre del desarrollo *</label><input class="field-input pf" data-prid="${pr.id}" data-f="nombre" value="${pr.nombre}" placeholder="Ej. Büa"/></div>
+      <div class="field-group"><label class="field-label">Nombre *</label><input class="field-input pf" data-prid="${pr.id}" data-f="nombre" value="${pr.nombre}" placeholder="Ej. Büa"/></div>
       <div class="field-group"><label class="field-label">Zona</label><input class="field-input pf" data-prid="${pr.id}" data-f="zona" value="${pr.zona}" placeholder="Temozón Norte"/></div>
     </div>
     <div class="row3">
@@ -178,7 +173,7 @@ function step2HTML(){
   <button class="btn-add" id="add-p">+ Agregar otro proyecto</button>
   <div class="nav-row">
     <button class="btn-secondary" id="back2">← Atrás</button>
-    <button class="btn-primary" id="next2" style="flex:1">Siguiente: Revisar →</button>
+    <button class="btn-primary" id="next2" style="flex:1">Siguiente: Generar PDF →</button>
   </div>`;}
 
 function bindStep2(){
@@ -195,8 +190,13 @@ function bindStep2(){
   document.querySelectorAll('.img-url-input').forEach(el=>{el.oninput=()=>{const p=state.proyectos.find(x=>x.id==el.dataset.prid);if(p)p.imgUrl=el.value;};});}
 
 function step3HTML(){
-  const c=state.cliente;const a=state.asesor;
-  const filas=state.proyectos.map((p,i)=>`<div class="resumen-row"><span class="resumen-num">Proyecto ${i+1}</span><span style="font-size:13px;font-weight:500;color:#1D1D1B;flex:1">${p.nombre||'Sin nombre'}</span><span style="font-size:12px;color:#878787">${p.precio}</span></div>`).join('');
+  const c=state.cliente,a=state.asesor;
+  const filas=state.proyectos.map((p,i)=>`
+    <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:0.5px solid #DADADA">
+      <span style="font-size:11px;color:#1D71B8;font-weight:500;min-width:72px">Proyecto ${i+1}</span>
+      <span style="font-size:13px;font-weight:500;color:#1D1D1B;flex:1">${p.nombre||'Sin nombre'}</span>
+      <span style="font-size:12px;color:#878787">${p.precio}</span>
+    </div>`).join('');
   return `${stepHeader(3)}
   <div class="section-card">
     <div class="section-label">Resumen</div>
@@ -215,21 +215,200 @@ function step3HTML(){
     <div style="font-size:11px;color:#878787;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:6px">Proyectos (${state.proyectos.length})</div>
     ${filas}
   </div>
-  <div class="success-banner" id="ok" style="display:none">✓ Enviando a Claude para generar el PDF...</div>
-  <div class="nav-row">
+  <button class="download-btn" id="gen-pdf">Descargar PDF</button>
+  <div class="nav-row" style="margin-top:10px">
     <button class="btn-secondary" id="back3">← Atrás</button>
-    <button class="btn-primary" id="gen" style="flex:1">Generar PDF ↗</button>
+    <button class="btn-secondary" id="nueva" style="flex:1">Nueva propuesta</button>
   </div>`;}
 
 function bindStep3(){
   document.getElementById('back3').onclick=()=>{state.step=2;render();};
-  document.getElementById('gen').onclick=()=>{
-    document.getElementById('ok').style.display='block';
-    const btn=document.getElementById('gen');btn.disabled=true;btn.textContent='Generando...';
-    const txt=state.proyectos.map((p,i)=>`Proyecto ${i+1}: ${p.nombre}\n- Zona: ${p.zona}\n- Precio: ${p.precio}\n- Entrega: ${p.entrega}\n- Recámaras: ${p.recamaras} | Sup: ${p.sup}\n- Amenidades: ${p.amenidades.join(', ')||'N/A'}\n- Enganche: ${p.enganche}\n- Brochure: ${p.brochure||'—'}\n- Maps: ${p.maps||'—'}`).join('\n\n');
-    const msg=`Genera el PDF de propuesta con branding morantes. Real Estate para:\n\nCLIENTE: ${state.cliente.nombre}\nPresupuesto: ${state.cliente.presupuesto} | Interés: ${state.cliente.interes}\n\nASESOR: ${state.asesor.nombre}\nTel: ${state.asesor.telefono} | Correo: ${state.asesor.correo}\n\nPROYECTOS:\n${txt}`;
-    setTimeout(()=>{if(typeof sendPrompt==='function')sendPrompt(msg);else alert('Copia este mensaje y pégalo en Claude:\n\n'+msg);},600);
-  };}
+  document.getElementById('nueva').onclick=()=>{state={...state,step:1,cliente:{nombre:'',presupuesto:'',interes:'vivienda'},asesor:{nombre:'',telefono:'',correo:''},proyectos:[newP(1)]};render();};
+  document.getElementById('gen-pdf').onclick=generarPDF;}
+
+function rgb(arr){return arr;}
+
+async function cargarImagen(src){
+  return new Promise((resolve)=>{
+    if(!src){resolve(null);return;}
+    const img=new Image();
+    img.crossOrigin='anonymous';
+    img.onload=()=>{
+      const c=document.createElement('canvas');
+      c.width=img.width;c.height=img.height;
+      c.getContext('2d').drawImage(img,0,0);
+      try{resolve(c.toDataURL('image/jpeg'));}catch(e){resolve(null);}
+    };
+    img.onerror=()=>resolve(null);
+    img.src=src;
+  });
+}
+
+async function generarPDF(){
+  const btn=document.getElementById('gen-pdf');
+  btn.disabled=true;btn.textContent='Generando...';
+
+  const {jsPDF}=window.jspdf;
+  const doc=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
+  const PW=210,PH=297,M=14;
+  const fecha=new Date().toLocaleDateString('es-MX',{day:'numeric',month:'long',year:'numeric'});
+
+  // HEADER
+  doc.setFillColor(...NAVY);
+  doc.rect(0,0,PW,22,'F');
+  doc.setTextColor(...WHITE);
+  doc.setFontSize(16);doc.setFont('helvetica','bold');
+  doc.text('morantes.',M,14);
+  doc.setFontSize(9);doc.setFont('helvetica','normal');
+  doc.setTextColor(138,180,212);
+  doc.text(`Mérida, Yucatán · ${fecha}`,PW-M,14,{align:'right'});
+  doc.setTextColor(100,160,200);
+  doc.text('Propuesta de departamentos',PW-M,19,{align:'right'});
+
+  // SUBTÍTULO
+  doc.setFontSize(9);doc.setFont('helvetica','normal');
+  doc.setTextColor(...GRAY);
+  doc.text(`Seleccioné estas opciones especialmente para ti, ${state.cliente.nombre}.`,M,30);
+
+  // GRID DE TARJETAS
+  const cols=2;
+  const cardW=(PW-2*M-6)/cols;
+  const cardH=110;
+  const startY=34;
+  const gapX=6,gapY=6;
+
+  for(let i=0;i<state.proyectos.length;i++){
+    const pr=state.proyectos[i];
+    const col=i%cols;
+    const row=Math.floor(i/cols);
+    const x=M+col*(cardW+gapX);
+    const y=startY+row*(cardH+gapY);
+
+    // Card background
+    doc.setFillColor(...WHITE);
+    doc.setDrawColor(...LINE);
+    doc.setLineWidth(0.3);
+    doc.roundedRect(x,y,cardW,cardH,2,2,'FD');
+
+    // Imagen fachada
+    const imgSrc=pr.imgData||(pr.imgUrl||null);
+    let imgLoaded=false;
+    if(imgSrc){
+      try{
+        let imgData=pr.imgData||await cargarImagen(pr.imgUrl);
+        if(imgData){
+          doc.addImage(imgData,'JPEG',x,y,cardW,28,undefined,'FAST');
+          imgLoaded=true;
+        }
+      }catch(e){}
+    }
+    if(!imgLoaded){
+      doc.setFillColor(232,239,248);
+      doc.rect(x,y,cardW,28,'F');
+      doc.setFontSize(7);doc.setTextColor(...GRAY);
+      doc.text('Imagen no disponible',x+cardW/2,y+15,{align:'center'});
+    }
+
+    // Barra de color
+    doc.setFillColor(...NAVY);
+    doc.rect(x,y+28,cardW,2,'F');
+
+    // Tag preventa
+    doc.setFillColor(...BLUE);
+    doc.roundedRect(x+cardW-22,y+2,20,5,1,1,'F');
+    doc.setFontSize(6);doc.setTextColor(...WHITE);doc.setFont('helvetica','bold');
+    doc.text(pr.tag||'Preventa',x+cardW-12,y+5.5,{align:'center'});
+
+    let cy=y+34;
+
+    // Nombre
+    doc.setFontSize(11);doc.setFont('helvetica','bold');doc.setTextColor(...DARK);
+    doc.text(pr.nombre||'—',x+3,cy);cy+=4;
+
+    // Zona
+    doc.setFontSize(7.5);doc.setFont('helvetica','normal');doc.setTextColor(...GRAY);
+    doc.text(pr.zona||'',x+3,cy);cy+=5;
+
+    // Precio
+    doc.setFontSize(12);doc.setFont('helvetica','bold');doc.setTextColor(...DARK);
+    doc.text(pr.precio||'—',x+3,cy);cy+=3.5;
+    doc.setFontSize(7);doc.setFont('helvetica','normal');doc.setTextColor(...GRAY);
+    doc.text('precio desde',x+3,cy);cy+=4;
+
+    // Pills
+    const pills=[pr.entrega,pr.recamaras,pr.sup].filter(Boolean);
+    let px=x+3;
+    pills.forEach(pill=>{
+      const pw=doc.getTextWidth(pill)+4;
+      doc.setDrawColor(...LINE);doc.setLineWidth(0.2);
+      doc.setFillColor(246,246,244);
+      doc.roundedRect(px,cy-2.5,pw,4,1,1,'FD');
+      doc.setFontSize(6.5);doc.setTextColor(...DARK);
+      doc.text(pill,px+2,cy+0.5);
+      px+=pw+2;
+    });
+    cy+=6;
+
+    // Línea
+    doc.setDrawColor(...LINE);doc.setLineWidth(0.2);
+    doc.line(x+3,cy,x+cardW-3,cy);cy+=3;
+
+    // Amenidades
+    if(pr.amenidades.length>0){
+      doc.setFontSize(6);doc.setFont('helvetica','bold');doc.setTextColor(...GRAY);
+      doc.text('AMENIDADES',x+3,cy);cy+=3;
+      const maxAm=6;
+      const ams=pr.amenidades.slice(0,maxAm);
+      let ax=x+3;
+      ams.forEach((am,idx)=>{
+        if(idx===3){ax=x+3;cy+=4;}
+        const aw=doc.getTextWidth(am)+4;
+        doc.setFontSize(6);doc.setFont('helvetica','normal');
+        doc.setFillColor(244,244,242);doc.setDrawColor(...LINE);doc.setLineWidth(0.2);
+        doc.roundedRect(ax,cy-2.5,aw,4,1,1,'FD');
+        doc.setTextColor(95,94,90);
+        doc.text(am,ax+2,cy+0.5);
+        ax+=aw+1.5;
+      });
+      cy+=5;
+    }
+
+    // Enganche
+    doc.setFontSize(7);doc.setFont('helvetica','normal');doc.setTextColor(...BLUE);
+    doc.text(pr.enganche||'',x+3,cy,{maxWidth:cardW-6});cy+=5;
+
+    // Línea
+    doc.setDrawColor(...LINE);doc.line(x+3,cy,x+cardW-3,cy);cy+=3;
+
+    // Botones
+    const btnW=(cardW-10)/2;
+    doc.setFillColor(...NAVY);doc.roundedRect(x+3,cy,btnW,5,1,1,'F');
+    doc.setFontSize(6.5);doc.setFont('helvetica','bold');doc.setTextColor(...WHITE);
+    doc.text('Brochure',x+3+btnW/2,cy+3.3,{align:'center'});
+    if(pr.brochure)doc.link(x+3,cy,btnW,5,{url:pr.brochure});
+
+    doc.setFillColor(...LIGHT_BLUE);doc.setDrawColor(181,212,244);doc.setLineWidth(0.3);
+    doc.roundedRect(x+3+btnW+2,cy,btnW,5,1,1,'FD');
+    doc.setTextColor(12,68,124);
+    doc.text('Ver ubicacion',x+3+btnW+2+btnW/2,cy+3.3,{align:'center'});
+    if(pr.maps)doc.link(x+3+btnW+2,cy,btnW,5,{url:pr.maps});
+  }
+
+  // FOOTER
+  const fy=PH-10;
+  doc.setDrawColor(...NAVY);doc.setLineWidth(0.5);
+  doc.line(M,fy-4,PW-M,fy-4);
+  doc.setFontSize(7.5);doc.setFont('helvetica','bold');doc.setTextColor(...NAVY);
+  doc.text('morantes.',M,fy);
+  doc.setFont('helvetica','normal');doc.setTextColor(...GRAY);
+  const asesorTexto=[state.asesor.nombre,state.asesor.telefono,state.asesor.correo].filter(Boolean).join('  ·  ');
+  doc.text(asesorTexto,PW-M,fy,{align:'right'});
+  doc.setFontSize(6.5);
+  doc.text('Precios y disponibilidad sujetos a cambio sin previo aviso.',M,fy+4);
+
+  doc.save(`propuesta_${state.cliente.nombre.replace(/\s+/g,'_')}.pdf`);
+  btn.disabled=false;btn.textContent='Descargar PDF';
+}
 
 render();
 </script>
