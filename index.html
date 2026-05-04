@@ -24,6 +24,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .field-input:focus{outline:none;border-color:#185FA5;background:#fff}
 .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+.precio-row{display:grid;grid-template-columns:1fr auto;gap:6px;align-items:end}
+.moneda-toggle{display:flex;border:0.5px solid #DADADA;border-radius:8px;overflow:hidden;height:36px}
+.moneda-btn{flex:1;border:none;background:#F6F6F4;color:#878787;font-size:12px;font-weight:500;cursor:pointer;padding:0 10px;transition:all 0.15s}
+.moneda-btn.active{background:#1D3461;color:#fff}
 .proyecto-card{background:#F6F6F4;border:0.5px solid #DADADA;border-radius:12px;padding:1rem;margin-bottom:10px}
 .proyecto-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
 .proyecto-num{font-size:12px;font-weight:500;color:#1D71B8;background:#E6F1FB;padding:3px 10px;border-radius:20px}
@@ -38,6 +42,15 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .amenidad-wrap{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
 .amenidad-tag{font-size:11px;padding:4px 10px;border-radius:20px;background:#fff;border:0.5px solid #DADADA;cursor:pointer;color:#878787;user-select:none}
 .amenidad-tag.sel{background:#E6F1FB;color:#0C447C;border-color:#185FA5}
+.extra-link-wrap{background:#fff;border:0.5px solid #DADADA;border-radius:8px;padding:10px;margin-top:6px}
+.extra-link-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.extra-link-label{font-size:12px;color:#878787}
+.toggle-switch{position:relative;display:inline-block;width:36px;height:20px}
+.toggle-switch input{opacity:0;width:0;height:0}
+.toggle-slider{position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;background:#DADADA;border-radius:20px;transition:0.2s}
+.toggle-slider:before{position:absolute;content:"";height:14px;width:14px;left:3px;bottom:3px;background:#fff;border-radius:50%;transition:0.2s}
+.toggle-switch input:checked+.toggle-slider{background:#1D3461}
+.toggle-switch input:checked+.toggle-slider:before{transform:translateX(16px)}
 .btn-primary{background:#1D3461;color:#fff;border:none;border-radius:8px;padding:12px 24px;font-size:14px;cursor:pointer;font-weight:500;width:100%;margin-top:8px}
 .btn-primary:hover{background:#142447}
 .btn-primary:disabled{background:#B4B2A9;cursor:not-allowed}
@@ -49,6 +62,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .error-msg{font-size:12px;color:#E24B4A;margin-top:8px;display:none}
 .download-btn{background:#1D9E75;color:#fff;border:none;border-radius:8px;padding:14px 24px;font-size:15px;cursor:pointer;font-weight:500;width:100%;margin-top:12px}
 .download-btn:hover{background:#0F6E56}
+.download-btn:disabled{background:#B4B2A9;cursor:not-allowed}
 @media(max-width:500px){.row2,.row3{grid-template-columns:1fr}.nav-row{flex-direction:column-reverse}}
 </style>
 </head>
@@ -56,12 +70,37 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 <div class="app" id="root"></div>
 <script>
 const USERS={"morantes":"Morantes2025","asesor1":"Asesor2025","asesor2":"Asesor2025"};
-const AMENIDADES=["Alberca","Bar climatizado","Coworking","Gimnasio","Grill","Estacionamiento","Elevador","Seguridad 24h","Jardín","Social Room","Pet Park","Piscina","Fitness Room","TV Room","Roof Garden"];
-const NAVY=[29,52,97], BLUE=[29,113,184], LIGHT_BLUE=[230,241,251], GRAY=[135,135,128], DARK=[29,29,27], LINE=[218,218,218], BG=[244,244,242], WHITE=[255,255,255], GREEN=[29,158,117];
+const AMENIDADES=[
+  "Alberca","Bar climatizado","Coworking","Gimnasio","Grill","Estacionamiento",
+  "Elevador","Seguridad 24h","Jardín","Social Room","Pet Park","Piscina",
+  "Fitness Room","TV Room","Roof Garden","Cancha de tenis","Cancha de pádel",
+  "Cancha de usos múltiples","Juegos para niños","Parque","Sauna"
+];
+const NAVY=[29,52,97],BLUE=[29,113,184],LIGHT_BLUE=[230,241,251],GRAY=[135,135,128],DARK=[29,29,27],LINE=[218,218,218],WHITE=[255,255,255];
 
-let state={loggedIn:false,user:"",step:1,cliente:{nombre:"",presupuesto:"",interes:"vivienda"},asesor:{nombre:"",telefono:"",correo:""},proyectos:[newP(1)]};
+function formatPrecio(raw,moneda){
+  const digits=raw.replace(/[^0-9]/g,'');
+  if(!digits)return '';
+  const num=parseInt(digits,10);
+  return '$'+num.toLocaleString('es-MX')+' '+moneda;
+}
 
-function newP(n){return{id:Date.now()+n,nombre:"",zona:"",precio:"",entrega:"",recamaras:"",sup:"",amenidades:[],enganche:"",brochure:"",maps:"",imgData:null,imgUrl:"",imgMode:"upload"};}
+let state={
+  loggedIn:false,user:"",step:1,
+  cliente:{nombre:"",presupuesto:"",interes:"vivienda"},
+  asesor:{nombre:"",telefono:"",correo:""},
+  proyectos:[newP(1)]
+};
+
+function newP(n){
+  return{
+    id:Date.now()+n,nombre:"",zona:"",precioRaw:"",moneda:"MXN",
+    entrega:"",recamaras:"",sup:"",amenidades:[],enganche:"",
+    brochure:"",maps:"",
+    extraActivo:false,extraLabel:"",extraUrl:"",
+    imgData:null,imgUrl:"",imgMode:"upload"
+  };
+}
 
 function render(){
   const root=document.getElementById('root');
@@ -110,7 +149,7 @@ function step1HTML(){
     <div class="section-label">Datos del cliente</div>
     <div class="field-group"><label class="field-label">Nombre del cliente *</label><input class="field-input" id="c-nombre" value="${c.nombre}" placeholder="Ej. Pepe Madero"/></div>
     <div class="row2">
-      <div class="field-group"><label class="field-label">Presupuesto máximo</label><input class="field-input" id="c-presupuesto" value="${c.presupuesto}" placeholder="$3,000,000 MXN"/></div>
+      <div class="field-group"><label class="field-label">Presupuesto máximo</label><input class="field-input" id="c-presupuesto" value="${c.presupuesto}" placeholder="$3,000,000"/></div>
       <div class="field-group"><label class="field-label">Interés</label>
         <select class="field-input" id="c-interes">
           <option value="vivienda" ${c.interes==='vivienda'?'selected':''}>Vivienda propia</option>
@@ -144,24 +183,49 @@ function proyHTML(pr,i){
   const imgSection=pr.imgMode==='upload'
     ?`<div class="img-upload-area"><input type="file" accept="image/*" data-prid="${pr.id}" class="img-file-input"/>${pr.imgData?`<img src="${pr.imgData}" class="img-preview"/>`:'<div style="font-size:12px;color:#878787;padding:6px 0">Subir foto de fachada</div>'}</div><span class="img-toggle" data-prid="${pr.id}" data-mode="url">O usar link de imagen</span>`
     :`<input class="field-input img-url-input" data-prid="${pr.id}" placeholder="https://..." value="${pr.imgUrl}"/><span class="img-toggle" data-prid="${pr.id}" data-mode="upload">O subir desde dispositivo</span>`;
+
+  const precioDisplay=formatPrecio(pr.precioRaw,pr.moneda);
+
   return `<div class="proyecto-card">
     <div class="proyecto-header"><span class="proyecto-num">Proyecto ${i+1}</span>${state.proyectos.length>1?`<button class="btn-remove" data-prid="${pr.id}">✕ Quitar</button>`:''}</div>
     <div class="row2">
       <div class="field-group"><label class="field-label">Nombre *</label><input class="field-input pf" data-prid="${pr.id}" data-f="nombre" value="${pr.nombre}" placeholder="Ej. Büa"/></div>
       <div class="field-group"><label class="field-label">Zona</label><input class="field-input pf" data-prid="${pr.id}" data-f="zona" value="${pr.zona}" placeholder="Temozón Norte"/></div>
     </div>
+    <div class="field-group">
+      <label class="field-label">Precio desde</label>
+      <div class="precio-row">
+        <input class="field-input precio-input" data-prid="${pr.id}" value="${pr.precioRaw}" placeholder="Ej. 2440000 o $2,440,000"/>
+        <div class="moneda-toggle">
+          <button class="moneda-btn ${pr.moneda==='MXN'?'active':''}" data-prid="${pr.id}" data-m="MXN">MXN</button>
+          <button class="moneda-btn ${pr.moneda==='USD'?'active':''}" data-prid="${pr.id}" data-m="USD">USD</button>
+        </div>
+      </div>
+      ${precioDisplay?`<div style="font-size:11px;color:#1D71B8;margin-top:3px">Vista previa: ${precioDisplay}</div>`:''}
+    </div>
     <div class="row3">
-      <div class="field-group"><label class="field-label">Precio desde</label><input class="field-input pf" data-prid="${pr.id}" data-f="precio" value="${pr.precio}" placeholder="$2,440,000"/></div>
       <div class="field-group"><label class="field-label">Entrega</label><input class="field-input pf" data-prid="${pr.id}" data-f="entrega" value="${pr.entrega}" placeholder="Ago 2026"/></div>
       <div class="field-group"><label class="field-label">Recámaras</label><input class="field-input pf" data-prid="${pr.id}" data-f="recamaras" value="${pr.recamaras}" placeholder="2 rec."/></div>
+      <div class="field-group"><label class="field-label">Superficie</label><input class="field-input pf" data-prid="${pr.id}" data-f="sup" value="${pr.sup}" placeholder="65 m²"/></div>
     </div>
     <div class="row2">
-      <div class="field-group"><label class="field-label">Superficie</label><input class="field-input pf" data-prid="${pr.id}" data-f="sup" value="${pr.sup}" placeholder="65 m²"/></div>
       <div class="field-group"><label class="field-label">Enganche</label><input class="field-input pf" data-prid="${pr.id}" data-f="enganche" value="${pr.enganche}" placeholder="10% enganche"/></div>
+      <div></div>
     </div>
     <div class="row2">
       <div class="field-group"><label class="field-label">Link Brochure</label><input class="field-input pf" data-prid="${pr.id}" data-f="brochure" value="${pr.brochure}" placeholder="https://drive.google.com/..."/></div>
       <div class="field-group"><label class="field-label">Link Ubicación</label><input class="field-input pf" data-prid="${pr.id}" data-f="maps" value="${pr.maps}" placeholder="https://maps.app.goo.gl/..."/></div>
+    </div>
+    <div class="extra-link-wrap">
+      <div class="extra-link-header">
+        <span class="extra-link-label">Botón extra (opcional)</span>
+        <label class="toggle-switch"><input type="checkbox" class="extra-toggle" data-prid="${pr.id}" ${pr.extraActivo?'checked':''}/><span class="toggle-slider"></span></label>
+      </div>
+      ${pr.extraActivo?`
+      <div class="row2">
+        <div class="field-group"><label class="field-label">Texto del botón</label><input class="field-input pf" data-prid="${pr.id}" data-f="extraLabel" value="${pr.extraLabel}" placeholder="Ej. Tabla de precios"/></div>
+        <div class="field-group"><label class="field-label">Link</label><input class="field-input pf" data-prid="${pr.id}" data-f="extraUrl" value="${pr.extraUrl}" placeholder="https://..."/></div>
+      </div>`:'<div style="font-size:11px;color:#B4B2A9">Activa para agregar un tercer botón con link personalizado</div>'}
     </div>
     <div class="field-group"><label class="field-label">Amenidades</label><div class="amenidad-wrap">${ams}</div></div>
     <div class="field-group"><label class="field-label">Imagen de fachada</label>${imgSection}</div>
@@ -182,12 +246,53 @@ function bindStep2(){
   document.getElementById('next2').onclick=()=>{
     if(!state.proyectos.some(p=>p.nombre.trim())){alert('Agrega al menos un proyecto');return;}
     state.step=3;render();};
-  document.querySelectorAll('.pf').forEach(el=>{el.oninput=()=>{const p=state.proyectos.find(x=>x.id==el.dataset.prid);if(p)p[el.dataset.f]=el.value;};});
-  document.querySelectorAll('.amenidad-tag').forEach(el=>{el.onclick=()=>{const p=state.proyectos.find(x=>x.id==el.dataset.prid);if(!p)return;const a=el.dataset.am;if(p.amenidades.includes(a))p.amenidades=p.amenidades.filter(x=>x!==a);else p.amenidades.push(a);el.classList.toggle('sel');};});
-  document.querySelectorAll('.btn-remove').forEach(el=>{el.onclick=()=>{state.proyectos=state.proyectos.filter(p=>p.id!=el.dataset.prid);render();};});
-  document.querySelectorAll('.img-toggle').forEach(el=>{el.onclick=()=>{const p=state.proyectos.find(x=>x.id==el.dataset.prid);if(p){p.imgMode=el.dataset.mode;render();}};});
-  document.querySelectorAll('.img-file-input').forEach(el=>{el.onchange=e=>{const p=state.proyectos.find(x=>x.id==el.dataset.prid);if(!p||!e.target.files[0])return;const r=new FileReader();r.onload=ev=>{p.imgData=ev.target.result;render();};r.readAsDataURL(e.target.files[0]);};});
-  document.querySelectorAll('.img-url-input').forEach(el=>{el.oninput=()=>{const p=state.proyectos.find(x=>x.id==el.dataset.prid);if(p)p.imgUrl=el.value;};});}
+
+  document.querySelectorAll('.pf').forEach(el=>{
+    el.oninput=()=>{const p=state.proyectos.find(x=>x.id==el.dataset.prid);if(p)p[el.dataset.f]=el.value;
+    if(el.dataset.f==='nombre'||el.dataset.f==='zona')return;};
+  });
+
+  document.querySelectorAll('.precio-input').forEach(el=>{
+    el.oninput=()=>{
+      const p=state.proyectos.find(x=>x.id==el.dataset.prid);
+      if(!p)return;
+      p.precioRaw=el.value;
+      const preview=el.closest('.field-group').querySelector('div[style]');
+      const formatted=formatPrecio(el.value,p.moneda);
+      if(preview){preview.textContent=formatted?'Vista previa: '+formatted:'';}
+    };
+  });
+
+  document.querySelectorAll('.moneda-btn').forEach(el=>{
+    el.onclick=()=>{
+      const p=state.proyectos.find(x=>x.id==el.dataset.prid);
+      if(!p)return;
+      p.moneda=el.dataset.m;
+      render();
+    };
+  });
+
+  document.querySelectorAll('.amenidad-tag').forEach(el=>{
+    el.onclick=()=>{const p=state.proyectos.find(x=>x.id==el.dataset.prid);if(!p)return;const a=el.dataset.am;if(p.amenidades.includes(a))p.amenidades=p.amenidades.filter(x=>x!==a);else p.amenidades.push(a);el.classList.toggle('sel');};
+  });
+
+  document.querySelectorAll('.btn-remove').forEach(el=>{
+    el.onclick=()=>{state.proyectos=state.proyectos.filter(p=>p.id!=el.dataset.prid);render();};
+  });
+
+  document.querySelectorAll('.extra-toggle').forEach(el=>{
+    el.onchange=()=>{const p=state.proyectos.find(x=>x.id==el.dataset.prid);if(p){p.extraActivo=el.checked;render();}};
+  });
+
+  document.querySelectorAll('.img-toggle').forEach(el=>{
+    el.onclick=()=>{const p=state.proyectos.find(x=>x.id==el.dataset.prid);if(p){p.imgMode=el.dataset.mode;render();}};
+  });
+  document.querySelectorAll('.img-file-input').forEach(el=>{
+    el.onchange=e=>{const p=state.proyectos.find(x=>x.id==el.dataset.prid);if(!p||!e.target.files[0])return;const r=new FileReader();r.onload=ev=>{p.imgData=ev.target.result;render();};r.readAsDataURL(e.target.files[0]);};
+  });
+  document.querySelectorAll('.img-url-input').forEach(el=>{
+    el.oninput=()=>{const p=state.proyectos.find(x=>x.id==el.dataset.prid);if(p)p.imgUrl=el.value;};
+  });}
 
 function step3HTML(){
   const c=state.cliente,a=state.asesor;
@@ -195,7 +300,7 @@ function step3HTML(){
     <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:0.5px solid #DADADA">
       <span style="font-size:11px;color:#1D71B8;font-weight:500;min-width:72px">Proyecto ${i+1}</span>
       <span style="font-size:13px;font-weight:500;color:#1D1D1B;flex:1">${p.nombre||'Sin nombre'}</span>
-      <span style="font-size:12px;color:#878787">${p.precio}</span>
+      <span style="font-size:12px;color:#878787">${formatPrecio(p.precioRaw,p.moneda)}</span>
     </div>`).join('');
   return `${stepHeader(3)}
   <div class="section-card">
@@ -226,19 +331,11 @@ function bindStep3(){
   document.getElementById('nueva').onclick=()=>{state={...state,step:1,cliente:{nombre:'',presupuesto:'',interes:'vivienda'},asesor:{nombre:'',telefono:'',correo:''},proyectos:[newP(1)]};render();};
   document.getElementById('gen-pdf').onclick=generarPDF;}
 
-function rgb(arr){return arr;}
-
 async function cargarImagen(src){
-  return new Promise((resolve)=>{
+  return new Promise(resolve=>{
     if(!src){resolve(null);return;}
-    const img=new Image();
-    img.crossOrigin='anonymous';
-    img.onload=()=>{
-      const c=document.createElement('canvas');
-      c.width=img.width;c.height=img.height;
-      c.getContext('2d').drawImage(img,0,0);
-      try{resolve(c.toDataURL('image/jpeg'));}catch(e){resolve(null);}
-    };
+    const img=new Image();img.crossOrigin='anonymous';
+    img.onload=()=>{const c=document.createElement('canvas');c.width=img.width;c.height=img.height;c.getContext('2d').drawImage(img,0,0);try{resolve(c.toDataURL('image/jpeg'));}catch(e){resolve(null);}};
     img.onerror=()=>resolve(null);
     img.src=src;
   });
@@ -247,17 +344,13 @@ async function cargarImagen(src){
 async function generarPDF(){
   const btn=document.getElementById('gen-pdf');
   btn.disabled=true;btn.textContent='Generando...';
-
   const {jsPDF}=window.jspdf;
   const doc=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
   const PW=210,PH=297,M=14;
   const fecha=new Date().toLocaleDateString('es-MX',{day:'numeric',month:'long',year:'numeric'});
 
-  // HEADER
-  doc.setFillColor(...NAVY);
-  doc.rect(0,0,PW,22,'F');
-  doc.setTextColor(...WHITE);
-  doc.setFontSize(16);doc.setFont('helvetica','bold');
+  doc.setFillColor(...NAVY);doc.rect(0,0,PW,22,'F');
+  doc.setTextColor(...WHITE);doc.setFontSize(16);doc.setFont('helvetica','bold');
   doc.text('morantes.',M,14);
   doc.setFontSize(9);doc.setFont('helvetica','normal');
   doc.setTextColor(138,180,212);
@@ -265,144 +358,112 @@ async function generarPDF(){
   doc.setTextColor(100,160,200);
   doc.text('Propuesta de departamentos',PW-M,19,{align:'right'});
 
-  // SUBTÍTULO
-  doc.setFontSize(9);doc.setFont('helvetica','normal');
-  doc.setTextColor(...GRAY);
+  doc.setFontSize(9);doc.setFont('helvetica','normal');doc.setTextColor(...GRAY);
   doc.text(`Seleccioné estas opciones especialmente para ti, ${state.cliente.nombre}.`,M,30);
 
-  // GRID DE TARJETAS
-  const cols=2;
-  const cardW=(PW-2*M-6)/cols;
-  const cardH=110;
-  const startY=34;
-  const gapX=6,gapY=6;
+  const cols=2,cardW=(PW-2*M-6)/cols,cardH=116,startY=34,gapX=6,gapY=6;
 
   for(let i=0;i<state.proyectos.length;i++){
     const pr=state.proyectos[i];
-    const col=i%cols;
-    const row=Math.floor(i/cols);
-    const x=M+col*(cardW+gapX);
-    const y=startY+row*(cardH+gapY);
+    const col=i%cols,row=Math.floor(i/cols);
+    const x=M+col*(cardW+gapX),y=startY+row*(cardH+gapY);
 
-    // Card background
-    doc.setFillColor(...WHITE);
-    doc.setDrawColor(...LINE);
-    doc.setLineWidth(0.3);
+    doc.setFillColor(...WHITE);doc.setDrawColor(...LINE);doc.setLineWidth(0.3);
     doc.roundedRect(x,y,cardW,cardH,2,2,'FD');
 
-    // Imagen fachada
     const imgSrc=pr.imgData||(pr.imgUrl||null);
     let imgLoaded=false;
     if(imgSrc){
       try{
         let imgData=pr.imgData||await cargarImagen(pr.imgUrl);
-        if(imgData){
-          doc.addImage(imgData,'JPEG',x,y,cardW,28,undefined,'FAST');
-          imgLoaded=true;
-        }
+        if(imgData){doc.addImage(imgData,'JPEG',x,y,cardW,28,undefined,'FAST');imgLoaded=true;}
       }catch(e){}
     }
     if(!imgLoaded){
-      doc.setFillColor(232,239,248);
-      doc.rect(x,y,cardW,28,'F');
+      doc.setFillColor(232,239,248);doc.rect(x,y,cardW,28,'F');
       doc.setFontSize(7);doc.setTextColor(...GRAY);
       doc.text('Imagen no disponible',x+cardW/2,y+15,{align:'center'});
     }
 
-    // Barra de color
-    doc.setFillColor(...NAVY);
-    doc.rect(x,y+28,cardW,2,'F');
-
-    // Tag preventa
-    doc.setFillColor(...BLUE);
-    doc.roundedRect(x+cardW-22,y+2,20,5,1,1,'F');
-    doc.setFontSize(6);doc.setTextColor(...WHITE);doc.setFont('helvetica','bold');
-    doc.text(pr.tag||'Preventa',x+cardW-12,y+5.5,{align:'center'});
+    doc.setFillColor(...NAVY);doc.rect(x,y+28,cardW,2,'F');
 
     let cy=y+34;
-
-    // Nombre
     doc.setFontSize(11);doc.setFont('helvetica','bold');doc.setTextColor(...DARK);
     doc.text(pr.nombre||'—',x+3,cy);cy+=4;
-
-    // Zona
     doc.setFontSize(7.5);doc.setFont('helvetica','normal');doc.setTextColor(...GRAY);
     doc.text(pr.zona||'',x+3,cy);cy+=5;
 
-    // Precio
+    const precioFormateado=formatPrecio(pr.precioRaw,pr.moneda);
     doc.setFontSize(12);doc.setFont('helvetica','bold');doc.setTextColor(...DARK);
-    doc.text(pr.precio||'—',x+3,cy);cy+=3.5;
+    doc.text(precioFormateado||'—',x+3,cy);cy+=3.5;
     doc.setFontSize(7);doc.setFont('helvetica','normal');doc.setTextColor(...GRAY);
     doc.text('precio desde',x+3,cy);cy+=4;
 
-    // Pills
     const pills=[pr.entrega,pr.recamaras,pr.sup].filter(Boolean);
     let px=x+3;
     pills.forEach(pill=>{
       const pw=doc.getTextWidth(pill)+4;
-      doc.setDrawColor(...LINE);doc.setLineWidth(0.2);
-      doc.setFillColor(246,246,244);
+      doc.setDrawColor(...LINE);doc.setLineWidth(0.2);doc.setFillColor(246,246,244);
       doc.roundedRect(px,cy-2.5,pw,4,1,1,'FD');
-      doc.setFontSize(6.5);doc.setTextColor(...DARK);
-      doc.text(pill,px+2,cy+0.5);
+      doc.setFontSize(6.5);doc.setTextColor(...DARK);doc.text(pill,px+2,cy+0.5);
       px+=pw+2;
-    });
-    cy+=6;
+    });cy+=6;
 
-    // Línea
-    doc.setDrawColor(...LINE);doc.setLineWidth(0.2);
-    doc.line(x+3,cy,x+cardW-3,cy);cy+=3;
+    doc.setDrawColor(...LINE);doc.setLineWidth(0.2);doc.line(x+3,cy,x+cardW-3,cy);cy+=3;
 
-    // Amenidades
     if(pr.amenidades.length>0){
       doc.setFontSize(6);doc.setFont('helvetica','bold');doc.setTextColor(...GRAY);
       doc.text('AMENIDADES',x+3,cy);cy+=3;
-      const maxAm=6;
-      const ams=pr.amenidades.slice(0,maxAm);
       let ax=x+3;
-      ams.forEach((am,idx)=>{
+      pr.amenidades.slice(0,6).forEach((am,idx)=>{
         if(idx===3){ax=x+3;cy+=4;}
         const aw=doc.getTextWidth(am)+4;
         doc.setFontSize(6);doc.setFont('helvetica','normal');
         doc.setFillColor(244,244,242);doc.setDrawColor(...LINE);doc.setLineWidth(0.2);
         doc.roundedRect(ax,cy-2.5,aw,4,1,1,'FD');
-        doc.setTextColor(95,94,90);
-        doc.text(am,ax+2,cy+0.5);
+        doc.setTextColor(95,94,90);doc.text(am,ax+2,cy+0.5);
         ax+=aw+1.5;
-      });
-      cy+=5;
+      });cy+=5;
     }
 
-    // Enganche
     doc.setFontSize(7);doc.setFont('helvetica','normal');doc.setTextColor(...BLUE);
     doc.text(pr.enganche||'',x+3,cy,{maxWidth:cardW-6});cy+=5;
-
-    // Línea
     doc.setDrawColor(...LINE);doc.line(x+3,cy,x+cardW-3,cy);cy+=3;
 
-    // Botones
-    const btnW=(cardW-10)/2;
-    doc.setFillColor(...NAVY);doc.roundedRect(x+3,cy,btnW,5,1,1,'F');
+    const totalBtns=pr.extraActivo&&pr.extraLabel?3:2;
+    const btnW=(cardW-6-(totalBtns-1)*2)/totalBtns;
+    let bx=x+3;
+
+    doc.setFillColor(...NAVY);doc.roundedRect(bx,cy,btnW,5,1,1,'F');
     doc.setFontSize(6.5);doc.setFont('helvetica','bold');doc.setTextColor(...WHITE);
-    doc.text('Brochure',x+3+btnW/2,cy+3.3,{align:'center'});
-    if(pr.brochure)doc.link(x+3,cy,btnW,5,{url:pr.brochure});
+    doc.text('Brochure',bx+btnW/2,cy+3.3,{align:'center'});
+    if(pr.brochure)doc.link(bx,cy,btnW,5,{url:pr.brochure});
+    bx+=btnW+2;
 
     doc.setFillColor(...LIGHT_BLUE);doc.setDrawColor(181,212,244);doc.setLineWidth(0.3);
-    doc.roundedRect(x+3+btnW+2,cy,btnW,5,1,1,'FD');
+    doc.roundedRect(bx,cy,btnW,5,1,1,'FD');
     doc.setTextColor(12,68,124);
-    doc.text('Ver ubicacion',x+3+btnW+2+btnW/2,cy+3.3,{align:'center'});
-    if(pr.maps)doc.link(x+3+btnW+2,cy,btnW,5,{url:pr.maps});
+    doc.text('Ver ubicacion',bx+btnW/2,cy+3.3,{align:'center'});
+    if(pr.maps)doc.link(bx,cy,btnW,5,{url:pr.maps});
+    bx+=btnW+2;
+
+    if(pr.extraActivo&&pr.extraLabel){
+      doc.setFillColor(244,244,242);doc.setDrawColor(...LINE);doc.setLineWidth(0.3);
+      doc.roundedRect(bx,cy,btnW,5,1,1,'FD');
+      doc.setTextColor(95,94,90);doc.setFont('helvetica','normal');
+      const labelTxt=pr.extraLabel.length>14?pr.extraLabel.substring(0,13)+'…':pr.extraLabel;
+      doc.text(labelTxt,bx+btnW/2,cy+3.3,{align:'center'});
+      if(pr.extraUrl)doc.link(bx,cy,btnW,5,{url:pr.extraUrl});
+    }
   }
 
-  // FOOTER
   const fy=PH-10;
-  doc.setDrawColor(...NAVY);doc.setLineWidth(0.5);
-  doc.line(M,fy-4,PW-M,fy-4);
+  doc.setDrawColor(...NAVY);doc.setLineWidth(0.5);doc.line(M,fy-4,PW-M,fy-4);
   doc.setFontSize(7.5);doc.setFont('helvetica','bold');doc.setTextColor(...NAVY);
   doc.text('morantes.',M,fy);
   doc.setFont('helvetica','normal');doc.setTextColor(...GRAY);
-  const asesorTexto=[state.asesor.nombre,state.asesor.telefono,state.asesor.correo].filter(Boolean).join('  ·  ');
-  doc.text(asesorTexto,PW-M,fy,{align:'right'});
+  const asesorTxt=[state.asesor.nombre,state.asesor.telefono,state.asesor.correo].filter(Boolean).join('  ·  ');
+  doc.text(asesorTxt,PW-M,fy,{align:'right'});
   doc.setFontSize(6.5);
   doc.text('Precios y disponibilidad sujetos a cambio sin previo aviso.',M,fy+4);
 
